@@ -13,12 +13,12 @@ from philoagents.application.conversation_service.workflow.nodes import (
     summarize_context_node,
     connector_node,
 )
-from philoagents.application.conversation_service.workflow.state import PhilosopherState
+from philoagents.application.conversation_service.workflow.state import AgentState
 
 
 @lru_cache(maxsize=1)
 def create_workflow_graph():
-    graph_builder = StateGraph(PhilosopherState)
+    graph_builder = StateGraph(AgentState)
 
     # Add all nodes
     graph_builder.add_node("conversation_node", conversation_node)

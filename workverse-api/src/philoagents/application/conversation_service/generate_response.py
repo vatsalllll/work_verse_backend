@@ -8,38 +8,34 @@ from opik.integrations.langchain import OpikTracer
 from philoagents.application.conversation_service.workflow.graph import (
     create_workflow_graph,
 )
-from philoagents.application.conversation_service.workflow.state import PhilosopherState
+from philoagents.application.conversation_service.workflow.state import AgentState
 from philoagents.config import settings
 
 
-async def get_response(
+async def get_persona_response(
     messages: str | list[str] | list[dict[str, Any]],
-    philosopher_id: str,
-    philosopher_name: str,
-    philosopher_perspective: str,
-    philosopher_style: str,
-    philosopher_context: str,
+    persona_id: str,
+    persona_name: str,
+    persona_perspective: str,
+    persona_style: str,
+    persona_context: str,
     new_thread: bool = False,
-) -> tuple[str, PhilosopherState]:
+) -> tuple[str, AgentState]:
     """Run a conversation through the workflow graph.
 
     Args:
-        message: Initial message to start the conversation.
-        philosopher_id: Unique identifier for the philosopher.
-        philosopher_name: Name of the philosopher.
-        philosopher_perspective: Philosopher's perspective on the topic.
-        philosopher_style: Style of conversation (e.g., "Socratic").
-        philosopher_context: Additional context about the philosopher.
+        messages:            User message(s) to process.
+        persona_id:          Unique identifier — used as the LangGraph thread_id
+                             so each persona maintains independent conversation history.
+        persona_name:        Display name of the active persona.
+        persona_perspective: The persona's subject-matter worldview / expertise.
+        persona_style:       Conversational tone and manner.
+        persona_context:     Additional retrieved context for this turn (RAG output).
+        new_thread:          When True, creates a fresh conversation thread.
 
     Returns:
-        tuple[str, PhilosopherState]: A tuple containing:
-            - The content of the last message in the conversation.
-            - The final state after running the workflow.
-
-    Raises:
-        RuntimeError: If there's an error running the conversation workflow.
+        tuple[str, AgentState]: The last AI message content and the final state.
     """
-
     graph_builder = create_workflow_graph()
 
     try:
@@ -53,7 +49,7 @@ async def get_response(
             opik_tracer = OpikTracer(graph=graph.get_graph(xray=True))
 
             thread_id = (
-                philosopher_id if not new_thread else f"{philosopher_id}-{uuid.uuid4()}"
+                persona_id if not new_thread else f"{persona_id}-{uuid.uuid4()}"
             )
             config = {
                 "configurable": {"thread_id": thread_id},
@@ -62,44 +58,32 @@ async def get_response(
             output_state = await graph.ainvoke(
                 input={
                     "messages": __format_messages(messages=messages),
-                    "philosopher_name": philosopher_name,
-                    "philosopher_perspective": philosopher_perspective,
-                    "philosopher_style": philosopher_style,
-                    "philosopher_context": philosopher_context,
+                    "persona_name": persona_name,
+                    "persona_perspective": persona_perspective,
+                    "persona_style": persona_style,
+                    "persona_context": persona_context,
                 },
                 config=config,
             )
         last_message = output_state["messages"][-1]
-        return last_message.content, PhilosopherState(**output_state)
+        return last_message.content, AgentState(**output_state)
     except Exception as e:
         raise RuntimeError(f"Error running conversation workflow: {str(e)}") from e
 
 
-async def get_streaming_response(
+async def get_persona_streaming_response(
     messages: str | list[str] | list[dict[str, Any]],
-    philosopher_id: str,
-    philosopher_name: str,
-    philosopher_perspective: str,
-    philosopher_style: str,
-    philosopher_context: str,
+    persona_id: str,
+    persona_name: str,
+    persona_perspective: str,
+    persona_style: str,
+    persona_context: str,
     new_thread: bool = False,
 ) -> AsyncGenerator[str, None]:
     """Run a conversation through the workflow graph with streaming response.
 
-    Args:
-        messages: Initial message to start the conversation.
-        philosopher_id: Unique identifier for the philosopher.
-        philosopher_name: Name of the philosopher.
-        philosopher_perspective: Philosopher's perspective on the topic.
-        philosopher_style: Style of conversation (e.g., "Socratic").
-        philosopher_context: Additional context about the philosopher.
-        new_thread: Whether to create a new conversation thread.
-
     Yields:
         Chunks of the response as they become available.
-
-    Raises:
-        RuntimeError: If there's an error running the conversation workflow.
     """
     graph_builder = create_workflow_graph()
 
@@ -114,7 +98,7 @@ async def get_streaming_response(
             opik_tracer = OpikTracer(graph=graph.get_graph(xray=True))
 
             thread_id = (
-                philosopher_id if not new_thread else f"{philosopher_id}-{uuid.uuid4()}"
+                persona_id if not new_thread else f"{persona_id}-{uuid.uuid4()}"
             )
             config = {
                 "configurable": {"thread_id": thread_id},
@@ -124,10 +108,10 @@ async def get_streaming_response(
             async for chunk in graph.astream(
                 input={
                     "messages": __format_messages(messages=messages),
-                    "philosopher_name": philosopher_name,
-                    "philosopher_perspective": philosopher_perspective,
-                    "philosopher_style": philosopher_style,
-                    "philosopher_context": philosopher_context,
+                    "persona_name": persona_name,
+                    "persona_perspective": persona_perspective,
+                    "persona_style": persona_style,
+                    "persona_context": persona_context,
                 },
                 config=config,
                 stream_mode="messages",
@@ -143,21 +127,55 @@ async def get_streaming_response(
         ) from e
 
 
+# ---------------------------------------------------------------------------
+# Backward-compat aliases (keeps existing code/notebooks working)
+# ---------------------------------------------------------------------------
+
+async def get_response(
+    messages: str | list[str] | list[dict[str, Any]],
+    philosopher_id: str,
+    philosopher_name: str,
+    philosopher_perspective: str,
+    philosopher_style: str,
+    philosopher_context: str,
+    new_thread: bool = False,
+) -> tuple[str, AgentState]:
+    return await get_persona_response(
+        messages=messages,
+        persona_id=philosopher_id,
+        persona_name=philosopher_name,
+        persona_perspective=philosopher_perspective,
+        persona_style=philosopher_style,
+        persona_context=philosopher_context,
+        new_thread=new_thread,
+    )
+
+
+async def get_streaming_response(
+    messages: str | list[str] | list[dict[str, Any]],
+    philosopher_id: str,
+    philosopher_name: str,
+    philosopher_perspective: str,
+    philosopher_style: str,
+    philosopher_context: str,
+    new_thread: bool = False,
+) -> AsyncGenerator[str, None]:
+    # Must use `yield` so this stays an async generator (not a coroutine returning one)
+    async for chunk in get_persona_streaming_response(
+        messages=messages,
+        persona_id=philosopher_id,
+        persona_name=philosopher_name,
+        persona_perspective=philosopher_perspective,
+        persona_style=philosopher_style,
+        persona_context=philosopher_context,
+        new_thread=new_thread,
+    ):
+        yield chunk
+
+
 def __format_messages(
     messages: Union[str, list[dict[str, Any]]],
 ) -> list[Union[HumanMessage, AIMessage]]:
-    """Convert various message formats to a list of LangChain message objects.
-
-    Args:
-        messages: Can be one of:
-            - A single string message
-            - A list of string messages
-            - A list of dictionaries with 'role' and 'content' keys
-
-    Returns:
-        List[Union[HumanMessage, AIMessage]]: A list of LangChain message objects
-    """
-
     if isinstance(messages, str):
         return [HumanMessage(content=messages)]
 
