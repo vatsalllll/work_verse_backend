@@ -14,4 +14,6 @@ RUN uv sync --frozen --no-cache
 COPY src/philoagents philoagents/
 COPY tools tools/
 
-CMD ["/app/.venv/bin/fastapi", "run", "philoagents/infrastructure/api.py", "--port", "8000", "--host", "0.0.0.0"]
+ENV PORT=8000
+EXPOSE ${PORT}
+CMD /app/.venv/bin/fastapi run philoagents/infrastructure/api.py --port ${PORT} --host 0.0.0.0
