@@ -53,5 +53,68 @@ class Settings(BaseSettings):
     EVALUATION_DATASET_FILE_PATH: Path = Path("data/evaluation_dataset.json")
     EXTRACTION_METADATA_FILE_PATH: Path = Path("data/extraction_metadata.json")
 
+    # --- Persona Configuration ---
+    DEFAULT_PERSONA_ID: str = Field(
+        default="swe",
+        description="Default persona used by channel adapters when no explicit persona is set.",
+    )
+
+    # =========================================================================
+    # Channel Configuration
+    # All channel fields are optional — leave unset to disable that channel.
+    # The ChannelManager only imports a channel adapter when its token/key is
+    # present, so unused channels have zero RAM footprint.
+    # =========================================================================
+
+    # --- Telegram ---
+    TELEGRAM_BOT_TOKEN: str | None = Field(
+        default=None,
+        description="Bot token from @BotFather.  Set to enable the Telegram channel.",
+    )
+
+    # --- Discord ---
+    DISCORD_BOT_TOKEN: str | None = Field(
+        default=None,
+        description="Bot token from the Discord Developer Portal.  Set to enable Discord.",
+    )
+
+    # --- Slack (Socket Mode) ---
+    SLACK_BOT_TOKEN: str | None = Field(
+        default=None,
+        description="Bot OAuth token (xoxb-…).  Set alongside SLACK_APP_TOKEN to enable Slack.",
+    )
+    SLACK_APP_TOKEN: str | None = Field(
+        default=None,
+        description="App-level token (xapp-…) for Socket Mode.  Required together with SLACK_BOT_TOKEN.",
+    )
+
+    # --- WhatsApp (Twilio) ---
+    TWILIO_ACCOUNT_SID: str | None = Field(
+        default=None,
+        description="Twilio account SID.  Required to enable the WhatsApp channel.",
+    )
+    TWILIO_AUTH_TOKEN: str | None = Field(
+        default=None,
+        description="Twilio auth token.",
+    )
+    TWILIO_WHATSAPP_FROM: str | None = Field(
+        default=None,
+        description='Twilio WhatsApp sender number, e.g. "whatsapp:+14155238886".',
+    )
+
+    # --- Email (IMAP / SMTP) ---
+    EMAIL_ADDRESS: str | None = Field(
+        default=None,
+        description="Email address to receive and send messages from.  Set to enable the Email channel.",
+    )
+    EMAIL_PASSWORD: str | None = Field(
+        default=None,
+        description="Email account password (or app-specific password).",
+    )
+    EMAIL_IMAP_HOST: str = "imap.gmail.com"
+    EMAIL_IMAP_PORT: int = 993
+    EMAIL_SMTP_HOST: str = "smtp.gmail.com"
+    EMAIL_SMTP_PORT: int = 465
+
 
 settings = Settings()

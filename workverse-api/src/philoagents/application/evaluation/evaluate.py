@@ -63,7 +63,7 @@ def get_used_prompts() -> list[opik.Prompt]:
     client = opik.Opik()
 
     prompts = [
-        client.get_prompt(name="philosopher_character_card"),
+        client.get_prompt(name="persona_character_card"),
         client.get_prompt(name="summary_prompt"),
         client.get_prompt(name="extend_summary_prompt"),
     ]

@@ -23,6 +23,11 @@ dependencies = [
     "ipykernel>=6.29.5",
     "pydantic>=2.10.6",
     "datasketch>=1.6.5",
+    # Channel adapters (optional — only install what you use)
+    "aiohttp>=3.9.0",         # Telegram long-polling
+    "discord.py>=2.0.0",      # Discord WebSocket
+    "slack-bolt>=1.18.0",     # Slack Socket Mode
+    "twilio>=8.0.0",          # WhatsApp via Twilio
 ]
 
 [dependency-groups]
