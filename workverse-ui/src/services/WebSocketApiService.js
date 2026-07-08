@@ -1,3 +1,5 @@
+import AuthService from './AuthService';
+
 class WebSocketApiService {
   constructor() {
     // Initialize connection-related properties
@@ -41,7 +43,11 @@ class WebSocketApiService {
         reject(new Error('WebSocket connection timeout'));
       }, this.connectionTimeout);
 
-      this.socket = new WebSocket(`${this.baseUrl}/ws/chat`);
+      const token = AuthService.getToken();
+      const wsUrl = token
+        ? `${this.baseUrl}/ws/chat?token=${encodeURIComponent(token)}`
+        : `${this.baseUrl}/ws/chat`;
+      this.socket = new WebSocket(wsUrl);
       
       this.socket.onopen = () => {
         console.log('WebSocket connection established');
@@ -116,7 +122,7 @@ class WebSocketApiService {
 
       this.socket.send(JSON.stringify({
         message: message,
-        philosopher_id: philosopher.id
+        persona_id: philosopher.personaId || philosopher.id
       }));
     } catch (error) {
       console.error('Error sending message via WebSocket:', error);

@@ -5,13 +5,227 @@
     <link rel="icon" type="image/png" href="./favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="./style.css">
-    <title>Philoagents</title>
+    <title>WorkVerse</title>
+    <style>
+        #auth-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            z-index: 1000;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        #auth-overlay.hidden { display: none; }
+        .auth-card {
+            width: 340px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 32px 28px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+        .auth-card h1 { margin: 0 0 4px; color: #0f172a; font-size: 30px; }
+        #auth-subtitle { margin: 0 0 20px; color: #64748b; font-size: 14px; }
+        .auth-card input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            margin: 6px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        #auth-submit {
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #auth-submit:hover { background: #1d4ed8; }
+        #auth-submit:disabled { background: #94a3b8; cursor: default; }
+        .auth-divider { margin: 18px 0 10px; color: #94a3b8; font-size: 12px; }
+        .oauth-btn {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .oauth-btn:hover { background: #f1f5f9; }
+        #auth-error { color: #dc2626; font-size: 13px; min-height: 18px; margin-bottom: 4px; }
+        #auth-toggle { margin-top: 16px; font-size: 13px; color: #475569; }
+        #auth-toggle a { color: #2563eb; cursor: pointer; text-decoration: underline; }
+        #auth-demo { margin-top: 14px; border-top: 1px dashed #cbd5e1; padding-top: 12px; }
+        #auth-demo .demo-label { font-size: 11px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+        .demo-btn {
+            display: block; width: 100%; padding: 9px; margin: 5px 0; cursor: pointer;
+            border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc;
+            font-size: 14px; color: #0f172a; text-align: left;
+        }
+        .demo-btn:hover { background: #eef2ff; border-color: #2563eb; }
+
+        /* =========================================================
+           In-game overlays — themed as RPG "stone-tablet" dialogue
+           boxes to match the ancient-Greece pixel game: dark slate
+           panels, bronze-gold borders, parchment text, blocky frames.
+           ========================================================= */
+        :root {
+            --wv-stone:   #16243a;   /* panel body            */
+            --wv-stone-d: #0f1b2a;   /* header / input bar    */
+            --wv-edge:    #0c141d;   /* outer pixel edge      */
+            --wv-gold:    #c8a44d;   /* bronze-gold border    */
+            --wv-gold-lt: #d8b65e;   /* gold hover            */
+            --wv-parch:   #f3e9cf;   /* parchment text        */
+            --wv-parch-d: #b9b196;   /* muted parchment       */
+            --wv-green:   #6abe30;   /* retro online green    */
+        }
+
+        /* ---- Logged-in user / switch bar ---- */
+        #whoami {
+            position: fixed; left: 16px; top: 14px; z-index: 900;
+            background: var(--wv-stone); color: var(--wv-parch);
+            border: 3px solid var(--wv-gold); border-radius: 4px;
+            padding: 7px 14px; font-family: 'Trebuchet MS', Verdana, sans-serif; font-size: 13px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 0 0 2px var(--wv-edge), 4px 4px 0 rgba(0,0,0,0.45);
+            image-rendering: pixelated;
+        }
+        #whoami-name { font-weight: bold; letter-spacing: .3px; }
+        #whoami button {
+            background: #7a2e2e; color: var(--wv-parch); border: 2px solid var(--wv-gold);
+            border-radius: 3px; padding: 3px 10px; font-size: 12px; cursor: pointer; font-family: inherit;
+        }
+        #whoami button:hover { background: #9b3b3b; }
+
+        /* ---- Human chat widget ---- */
+        #hc-fab {
+            position: fixed; right: 20px; bottom: 20px; z-index: 900;
+            background: var(--wv-stone); color: var(--wv-parch);
+            border: 3px solid var(--wv-gold); border-radius: 4px;
+            padding: 12px 18px; font-size: 15px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 0 0 2px var(--wv-edge), 4px 4px 0 rgba(0,0,0,0.5);
+            font-family: 'Trebuchet MS', Verdana, sans-serif; letter-spacing: .5px;
+            image-rendering: pixelated;
+        }
+        #hc-fab:hover { background: #1d2c3e; }
+        .hc-badge {
+            background: #b3402f; color: #fff; border: 2px solid var(--wv-parch);
+            border-radius: 8px; font-size: 12px; padding: 0 6px; margin-left: 6px;
+        }
+        #hc-panel {
+            position: fixed; right: 20px; bottom: 20px; z-index: 901;
+            width: 330px; height: 460px; background: var(--wv-stone);
+            border: 3px solid var(--wv-gold); border-radius: 6px;
+            box-shadow: 0 0 0 3px var(--wv-edge), 8px 8px 0 rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; overflow: hidden;
+            font-family: 'Trebuchet MS', Verdana, sans-serif; color: var(--wv-parch);
+            image-rendering: pixelated;
+        }
+        .hc-hidden { display: none !important; }
+        .hc-header {
+            display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+            background: var(--wv-stone-d); color: var(--wv-parch); font-weight: bold;
+            text-transform: uppercase; letter-spacing: 1.5px; font-size: 14px;
+            border-bottom: 3px solid var(--wv-gold);
+        }
+        .hc-header button { background: transparent; border: none; color: var(--wv-parch); font-size: 16px; cursor: pointer; line-height: 1; }
+        .hc-header button:hover { color: #fff; }
+        #hc-title { flex: 1; }
+        .hc-body { flex: 1; overflow-y: auto; padding: 10px; }
+        .hc-user {
+            padding: 10px 12px; border-radius: 4px; cursor: pointer; display: flex;
+            align-items: center; gap: 8px; font-size: 14px; color: var(--wv-parch);
+            border: 2px solid transparent;
+        }
+        .hc-user:hover { background: rgba(200,164,77,0.15); border-color: var(--wv-gold); }
+        .hc-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--wv-green); box-shadow: 0 0 6px var(--wv-green); flex: none; }
+        .hc-dot.offline { background: #6b7280; box-shadow: none; }
+        .hc-uname { flex: 1; }
+        .hc-status { font-size: 11px; color: var(--wv-parch-d); text-transform: uppercase; letter-spacing: .5px; }
+        .hc-empty { color: var(--wv-parch-d); font-size: 13px; text-align: center; margin-top: 24px; }
+        .hc-msg { margin: 6px 0; display: flex; }
+        .hc-msg.mine { justify-content: flex-end; }
+        .hc-bubble {
+            max-width: 75%; padding: 8px 12px; border-radius: 6px; font-size: 14px;
+            background: #2c3e50; color: var(--wv-parch); word-wrap: break-word; border: 2px solid #1a2836;
+        }
+        .hc-msg.mine .hc-bubble { background: #4a7a3f; color: #f3efe0; border-color: #355c2c; }
+        .hc-input-row { display: flex; gap: 6px; padding: 10px; border-top: 3px solid var(--wv-gold); background: var(--wv-stone-d); }
+        #hc-input {
+            flex: 1; padding: 9px 12px; border: 2px solid var(--wv-gold); border-radius: 4px;
+            font-size: 14px; background: var(--wv-stone); color: var(--wv-parch);
+        }
+        #hc-input::placeholder { color: #7d8ea0; }
+        #hc-send {
+            padding: 9px 14px; background: var(--wv-gold); color: #1b2233; border: none;
+            border-radius: 4px; cursor: pointer; font-weight: bold; font-family: inherit;
+        }
+        #hc-send:hover { background: var(--wv-gold-lt); }
+
+        /* Pixel-styled scrollbar inside the panel */
+        #hc-panel .hc-body::-webkit-scrollbar { width: 10px; }
+        #hc-panel .hc-body::-webkit-scrollbar-thumb { background: var(--wv-gold); border-radius: 0; }
+        #hc-panel .hc-body::-webkit-scrollbar-track { background: var(--wv-stone-d); }
+    </style>
 </head>
 
 <body>
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <h1>WorkVerse</h1>
+            <p id="auth-subtitle">Log in to enter the virtual office</p>
+            <div id="auth-error"></div>
+            <input id="auth-name" type="text" placeholder="Your name" style="display:none" />
+            <input id="auth-email" type="email" placeholder="Email" autocomplete="email" />
+            <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password" />
+            <button id="auth-submit">Log In</button>
+            <div class="auth-divider">— or —</div>
+            <button class="oauth-btn" id="auth-google">Continue with Google</button>
+            <button class="oauth-btn" id="auth-slack">Continue with Slack</button>
+            <p id="auth-toggle">No account? <a id="auth-toggle-link">Sign up</a></p>
+            <div id="auth-demo" class="hc-hidden">
+                <div class="demo-label">Quick demo login — pick a person</div>
+                <div id="auth-demo-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logged-in user / switch account (hidden until logged in) -->
+    <div id="whoami" class="hc-hidden">
+        <span id="whoami-name"></span>
+        <button id="whoami-logout">Switch user</button>
+    </div>
     <div id="app">
         <div id="game-container"></div>
     </div>
-    <!-- <script type="module" src="src/main.js"></script> -->
+
+    <!-- Human-to-human chat widget (hidden until logged in) -->
+    <button id="hc-fab" class="hc-hidden">💬 People <span id="hc-badge" class="hc-badge hc-hidden">0</span></button>
+    <div id="hc-panel" class="hc-hidden">
+        <div class="hc-header">
+            <button id="hc-back" class="hc-hidden">←</button>
+            <span id="hc-title">People online</span>
+            <button id="hc-close">✕</button>
+        </div>
+        <div id="hc-list" class="hc-body"></div>
+        <div id="hc-chat" class="hc-body hc-hidden">
+            <div id="hc-messages" style="flex:1; overflow-y:auto;"></div>
+        </div>
+        <div id="hc-input-row" class="hc-input-row hc-hidden">
+            <input id="hc-input" type="text" placeholder="Type a message…" autocomplete="off" />
+            <button id="hc-send">Send</button>
+        </div>
+    </div>
 </body>
 </html>

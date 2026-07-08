@@ -20,10 +20,6 @@ export class MainMenu extends Scene {
         this.createButton(centerX, startY + buttonSpacing, 'Instructions', () => {
             this.showInstructions();
         });
-
-        this.createButton(centerX, startY + buttonSpacing * 2, 'Support Philoagents', () => {
-            window.open('https://github.com/neural-maze/philoagents-course', '_blank');
-        });
     }
 
     createButton(x, y, text, callback) {
@@ -143,7 +139,7 @@ export class MainMenu extends Scene {
         
         const instructions = [
             'Arrow keys for moving',
-            'SPACE for talking to philosophers',
+            'SPACE for talking to teammates',
             'ESC for closing the dialogue'
         ];
         

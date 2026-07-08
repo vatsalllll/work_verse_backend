@@ -8,17 +8,22 @@ class AgentState(MessagesState):
     conversation between an NPC and the user.
 
     Attributes:
-        persona_context:     Retrieved knowledge-base context for the current turn.
-        persona_name:        Display name of the active persona.
-        persona_perspective: The persona's subject-matter worldview / expertise.
-        persona_style:       Conversational tone and manner.
-        summary:             Rolling conversation summary used to reduce token usage.
+        persona_context:        Retrieved knowledge-base context for the current turn.
+        persona_id:             Slug of the active persona; selects its bound tools.
+        persona_name:           Display name of the active persona.
+        persona_perspective:    The persona's subject-matter worldview / expertise.
+        persona_style:          Conversational tone and manner.
+        persona_responsibilities: What this role owns at work (grounds behaviour).
+        summary:                Rolling conversation summary used to reduce token usage.
     """
 
     persona_context: str
+    persona_id: str
     persona_name: str
     persona_perspective: str
     persona_style: str
+    persona_responsibilities: str
+    user_chats: str
     summary: str
 
 

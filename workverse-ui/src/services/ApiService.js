@@ -1,3 +1,5 @@
+import AuthService from './AuthService';
+
 class ApiService {
   constructor() {
     const isHttps = window.location.protocol === 'https:';
@@ -13,10 +15,12 @@ class ApiService {
 
   async request(endpoint, method, data) {
     const url = `${this.apiUrl}${endpoint}`;
+    const token = AuthService.getToken();
     const options = {
       method,
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: data ? JSON.stringify(data) : undefined,
     };
@@ -34,7 +38,7 @@ class ApiService {
     try {
       const data = await this.request('/chat', 'POST', {
         message,
-        philosopher_id: philosopher.id
+        persona_id: philosopher.personaId || philosopher.id
       });
       
       return data.response;

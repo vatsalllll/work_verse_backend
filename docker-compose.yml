@@ -15,25 +15,25 @@ services:
   api:
     container_name: philoagents-api
     build:
-      context: ./philoagents-api
+      context: ./workverse-api
       dockerfile: Dockerfile
     environment:
-      - MONGODB_URI=mongodb://philoagents:philoagents@local_dev_atlas:27017/?directConnection=true
+      - MONGO_URI=mongodb://philoagents:philoagents@local_dev_atlas:27017/?directConnection=true
     ports:
       - "8000:8000"
     env_file:
-      - ./philoagents-api/.env
+      - ./workverse-api/.env
     networks:
       - philoagents-network
   ui:
     container_name: philoagents-ui
     build:
-      context: ./philoagents-ui
+      context: ./workverse-ui
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
     volumes:
-      - ./philoagents-ui:/app
+      - ./workverse-ui:/app
       - /app/node_modules
     depends_on:
       - api

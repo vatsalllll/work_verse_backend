@@ -16,6 +16,11 @@ class Persona(BaseModel):
                      used to ground the LLM's responses.
         style:       Conversational tone and manner (terse, empathetic, Socratic…).
         expertise:   List of topic domains the persona is knowledgeable about.
+        responsibilities: Plain-language description of what this role owns at
+                     work. Rendered into the system prompt to ground behaviour.
+        tools:       Capability slugs this persona is allowed to call (resolved
+                     against the tool registry, e.g. "jira_my_tasks"). Empty
+                     means the persona only converses, with no external tools.
     """
 
     id: str
@@ -24,3 +29,5 @@ class Persona(BaseModel):
     perspective: str
     style: str
     expertise: list[str] = []
+    responsibilities: str = ""
+    tools: list[str] = []

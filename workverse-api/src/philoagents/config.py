@@ -28,6 +28,56 @@ class Settings(BaseSettings):
     MONGO_STATE_CHECKPOINT_COLLECTION: str = "philosopher_state_checkpoints"
     MONGO_STATE_WRITES_COLLECTION: str = "philosopher_state_writes"
     MONGO_LONG_TERM_MEMORY_COLLECTION: str = "philosopher_long_term_memory"
+    MONGO_USERS_COLLECTION: str = "users"
+    MONGO_MESSAGES_COLLECTION: str = "direct_messages"
+
+    # --- Authentication (JWT) ---
+    JWT_SECRET: str = Field(
+        default="dev-only-insecure-secret-change-me",
+        description="Secret used to sign auth tokens. MUST be overridden in production.",
+    )
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRY_MINUTES: int = 60 * 24 * 7  # 7 days
+
+    # --- Demo mode ---
+    # When True, the API seeds a set of ready-made workspace accounts and allows
+    # one-click "log in as <person>" for easy demos.  Turn OFF in production.
+    DEMO_MODE: bool = True
+
+    # --- OAuth (Google / Slack) — Phase B/C, optional ---
+    FRONTEND_URL: str = Field(
+        default="http://localhost:8080",
+        description="Where to redirect the browser back to after an OAuth login.",
+    )
+    OAUTH_REDIRECT_BASE: str = Field(
+        default="http://localhost:8000",
+        description="Public base URL of this API, used to build OAuth callback URLs.",
+    )
+    GOOGLE_CLIENT_ID: str | None = Field(default=None)
+    GOOGLE_CLIENT_SECRET: str | None = Field(default=None)
+    SLACK_CLIENT_ID: str | None = Field(default=None)
+    SLACK_CLIENT_SECRET: str | None = Field(default=None)
+
+    # --- Jira Configuration (optional) ---
+    # Set all three to enable the `jira_my_tasks` tool. When any is missing the
+    # tool is not registered and personas fall back to plain conversation.
+    JIRA_BASE_URL: str | None = Field(
+        default=None,
+        description='Base URL of your Jira Cloud site, e.g. "https://your-company.atlassian.net".',
+    )
+    JIRA_EMAIL: str | None = Field(
+        default=None,
+        description="Email of the Jira account whose API token is used (Basic auth user).",
+    )
+    JIRA_API_TOKEN: str | None = Field(
+        default=None,
+        description="Jira API token (created at id.atlassian.com → Security → API tokens).",
+    )
+
+    @property
+    def JIRA_ENABLED(self) -> bool:
+        """True only when every Jira credential is present."""
+        return bool(self.JIRA_BASE_URL and self.JIRA_EMAIL and self.JIRA_API_TOKEN)
 
     # --- Comet ML & Opik Configuration ---
     COMET_API_KEY: str | None = Field(

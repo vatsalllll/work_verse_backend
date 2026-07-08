@@ -3,6 +3,7 @@ class Character {
     this.scene = scene;
     this.id = config.id;
     this.name = config.name;
+    this.personaId = config.personaId || config.id;
     this.spawnPoint = config.spawnPoint;
     this.atlas = config.atlas;
     this.defaultFrame = `${this.id}-${config.defaultDirection || 'front'}`;
@@ -74,7 +75,7 @@ class Character {
     );
   }
   
-  isPlayerNearby(player, distance = 55) {
+  isPlayerNearby(player, distance = 90) {
     return this.distanceToPlayer(player) < distance;
   }
   

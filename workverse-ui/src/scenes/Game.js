@@ -24,8 +24,6 @@ export class Game extends Scene
         const map = this.createTilemap();
         const tileset = this.addTileset(map);
         const layers = this.createLayers(map, tileset);
-        let screenPadding = 20;
-        let maxDialogueHeight = 200;
 
         this.createPhilosophers(map, layers);
 
@@ -36,63 +34,44 @@ export class Game extends Scene
 
         this.setupDialogueSystem();
 
-        this.dialogueBox = new DialogueBox(this);
-        this.dialogueText = this.add
-            .text(60, this.game.config.height - maxDialogueHeight - screenPadding + screenPadding, '', {
-            font: "18px monospace",
-            fill: "#ffffff",
-            padding: { x: 20, y: 10 },
-            wordWrap: { width: 680 },
-            lineSpacing: 6,
-            maxLines: 5
-            })
-            .setScrollFactor(0)
-            .setDepth(30)
-            .setVisible(false);
+        this.createInteractionPrompt();
+    }
 
-        this.spaceKey = this.input.keyboard.addKey('SPACE');
-        
-        // Initialize the dialogue manager
-        this.dialogueManager = new DialogueManager(this);
-        this.dialogueManager.initialize(this.dialogueBox);
+    createInteractionPrompt() {
+        this.interactionPrompt = this.add
+            .text(this.cameras.main.width / 2, this.cameras.main.height - 40, '', {
+                font: "20px Arial",
+                fill: "#ffffff",
+                backgroundColor: "#000000",
+                padding: { x: 12, y: 6 }
+            })
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(40)
+            .setVisible(false);
     }
 
     createPhilosophers(map, layers) {
+        // WorkVerse AI coworkers. Each reuses an existing character sprite (`atlas`)
+        // and spawns at that character's location in the map (`spawnName`), but is
+        // labelled and wired to one of the backend personas (`personaId`).
         const philosopherConfigs = [
-            { id: "socrates", name: "Socrates", defaultDirection: "right", roamRadius: 800 },
-            { id: "aristotle", name: "Aristotle", defaultDirection: "right", roamRadius: 700 },
-            { id: "plato", name: "Plato", defaultDirection: "front", roamRadius: 750 },
-            { id: "descartes", name: "Descartes", defaultDirection: "front", roamRadius: 650 },
-            { id: "leibniz", name: "Leibniz", defaultDirection: "front", roamRadius: 720 },
-            { id: "ada_lovelace", name: "Ada Lovelace", defaultDirection: "front", roamRadius: 680 },
-            { id: "turing", name: "Turing", defaultDirection: "front", roamRadius: 770 },
-            { id: "searle", name: "Searle", defaultDirection: "front", roamRadius: 730 },
-            { id: "chomsky", name: "Chomsky", defaultDirection: "front", roamRadius: 690 },
-            { id: "dennett", name: "Dennett", defaultDirection: "front", roamRadius: 710 },
-            { 
-                id: "miguel", 
-                name: "Miguel", 
-                defaultDirection: "front", 
-                roamRadius: 300,
-                defaultMessage: "Hey there! I'm Miguel, but you can call me Mr Agent. I'd love to chat, but I'm currently writing my Substack article for tomorrow. If you're curious about my work, take a look at The Neural Maze!" 
-            },
-            { 
-                id: "paul", 
-                name: "Paul", 
-                defaultDirection: "front",
-                roamRadius: 300,
-                defaultMessage: "Hey, I'm busy teaching my cat AI with my latest course. I can't talk right now. Check out Decoding ML for more on my thoughts." 
-            }
+            { id: "socrates",     personaId: "cto",      name: "Rahul (CTO)",       spawnName: "Socrates",     defaultDirection: "right", roamRadius: 800 },
+            { id: "turing",       personaId: "swe",      name: "Arjun (Engineer)",  spawnName: "Turing",       defaultDirection: "front", roamRadius: 770 },
+            { id: "plato",        personaId: "pm",       name: "Priya (PM)",        spawnName: "Plato",        defaultDirection: "front", roamRadius: 750 },
+            { id: "ada_lovelace", personaId: "designer", name: "Meera (Designer)",  spawnName: "Ada Lovelace", defaultDirection: "front", roamRadius: 680 },
+            { id: "aristotle",    personaId: "hr",       name: "Simran (HR)",       spawnName: "Aristotle",    defaultDirection: "right", roamRadius: 700 }
         ];
 
         this.philosophers = [];
-        
+
         philosopherConfigs.forEach(config => {
-            const spawnPoint = map.findObject("Objects", (obj) => obj.name === config.name);
-            
+            const spawnPoint = map.findObject("Objects", (obj) => obj.name === config.spawnName);
+
             this[config.id] = new Character(this, {
                 id: config.id,
                 name: config.name,
+                personaId: config.personaId,
                 spawnPoint: spawnPoint,
                 atlas: config.id,
                 defaultDirection: config.defaultDirection,
@@ -132,6 +111,15 @@ export class Game extends Scene
             }
         }
         
+        // Show a hint when standing next to a teammate (and not already chatting)
+        if (nearbyPhilosopher && !this.dialogueBox.isVisible()) {
+            this.interactionPrompt
+                .setText(`Press SPACE to talk to ${nearbyPhilosopher.name}`)
+                .setVisible(true);
+        } else {
+            this.interactionPrompt.setVisible(false);
+        }
+
         if (nearbyPhilosopher) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                 if (!this.dialogueBox.isVisible()) {

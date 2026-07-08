@@ -6,17 +6,23 @@ from philoagents.application.conversation_service.workflow.chains import (
     get_context_summary_chain,
     get_conversation_summary_chain,
     get_persona_response_chain,
+    get_persona_tools_summary,
 )
 from philoagents.application.conversation_service.workflow.state import AgentState
-from philoagents.application.conversation_service.workflow.tools import tools
+from philoagents.application.conversation_service.workflow.tools import all_tools
 from philoagents.config import settings
 
-retriever_node = ToolNode(tools)
+# Single ToolNode holding every registered tool; it only executes whatever the
+# model actually called (which is gated per-persona at bind time).
+tool_node = ToolNode(all_tools())
+# Backward-compat alias (the graph historically named this node's executor).
+retriever_node = tool_node
 
 
 async def conversation_node(state: AgentState, config: RunnableConfig):
     summary = state.get("summary", "")
-    conversation_chain = get_persona_response_chain()
+    persona_id = state.get("persona_id")
+    conversation_chain = get_persona_response_chain(persona_id)
 
     response = await conversation_chain.ainvoke(
         {
@@ -25,6 +31,9 @@ async def conversation_node(state: AgentState, config: RunnableConfig):
             "persona_name": state["persona_name"],
             "persona_perspective": state["persona_perspective"],
             "persona_style": state["persona_style"],
+            "persona_responsibilities": state.get("persona_responsibilities", ""),
+            "user_chats": state.get("user_chats", "") or "No direct messages yet.",
+            "available_tools": get_persona_tools_summary(persona_id),
             "summary": summary,
         },
         config,
